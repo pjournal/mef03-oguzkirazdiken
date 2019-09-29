@@ -1,5 +1,7 @@
 ## Welcome to My Progress Journal
 
-[R Markdown Homework](BDA 503 Oguz Kirazdiken.Rmd)
+## Week 1
+
+[RMarkdown Homework](https://pjournal.github.io/mef03-oguzkirazdiken/Oguz-Kirazdiken-R-Markdown-Homework.html)
 
 
