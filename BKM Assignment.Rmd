@@ -1,0 +1,99 @@
+---
+title: "BKM Assignment Document"
+output: html_document
+---
+
+#### <u> Understanding Turkeys Sectoral Card Transaction Changes In Six Month </u>
+
+The Interbank Card Center (BKM) was established in 1990 with the partnership of 13 public and private Turkish banks for the purpose of providing solutions to the common problems and developing the rules and standards of credit and debit cards in Turkey, within the card payment system.For further info please visit BKM [website.](https://bkm.com.tr/en/)
+
+#### __Gathering Civilized Data__
+
+To get last 6 months transaction data from BKM, I used rvest packege in for loop to follow the link pattern.
+After that data clearence process started in order to gather our civilized data.
+
+```{r results='hide', message=FALSE}
+library(rvest)
+library(dplyr)
+library(ggplot2)
+url <- "https://bkm.com.tr/secilen-aya-ait-sektorel-gelisim/?filter_year=2019&filter_month=1"
+page <- read_html(url)
+tablo <- html_table(page, fill = TRUE)[[4]][-c(1:2),]
+for(i in 2:6) {
+  url <- paste("https://bkm.com.tr/secilen-aya-ait-sektorel-gelisim/?filter_year=2019&filter_month=", i, sep = "")
+  page <- read_html(url)
+  tablo <- bind_rows(tablo, html_table(page, fill = TRUE)[[4]][-c(1:2),-1])}
+is_yeri <- c(tablo%>% select(X1) %>%  filter(X1 != "NA"))
+is_yeri_1 <- c(rep(is_yeri[["X1"]], times=6))
+tablo_1 <- tablo %>% mutate(X1 = is_yeri_1) %>% filter(X1 != "TOPLAM")
+month_1 <- c(rep(1:6, times=1, each=26))
+tablo_son <- tablo_1 %>% mutate(month = month_1)
+tablo2  <- as.data.frame(lapply(tablo_son, function(x) as.numeric(gsub(",", ".", gsub("\\.", "", x)))))
+tablo2[,1] <- tablo_son[,1]
+tablo_son <- tablo2
+colnames(tablo_son) <- c("isyeri_grubu","kredi_kartı_islem_adedi","banka_kartı_islem_adedi","kredi_kartı_islem_tutarı","banka_kartı_islem_tutarı","ay")
+
+``` 
+
+#### __Analyses Related to Transaction Activity In Different Sectors__
+##### <u>_Total Transaction Amounts and Share_</u>
+For the first 6 months of 2019, sectors total amounts of transaction debit and credit card and also their shares as percentage.
+
+```{r message=FALSE}
+ tablo_son %>% select(isyeri_grubu,kredi_kartı_islem_tutarı,banka_kartı_islem_tutarı) %>% 
+  mutate(toplam_islem_tutarı = kredi_kartı_islem_tutarı + banka_kartı_islem_tutarı) %>%
+  group_by(isyeri_grubu) %>% summarise(isyeri_grubu_total = sum(toplam_islem_tutarı)) %>%
+  arrange(desc(isyeri_grubu_total)) %>%
+  transmute(isyeri_grubu,isyeri_grubu_total,isyeri_grubu_total_fraction = round((isyeri_grubu_total / sum(isyeri_grubu_total))*100,1))
+
+``` 
+
+Highest seven sector according to their total card transaction amounts in six month.
+
+```{r message=FALSE}
+tablo_son %>% select(isyeri_grubu,kredi_kartı_islem_tutarı,banka_kartı_islem_tutarı) %>% 
+  mutate(toplam_islem_tutarı = kredi_kartı_islem_tutarı + banka_kartı_islem_tutarı) %>%
+  group_by(isyeri_grubu) %>% summarise(isyeri_grubu_total = sum(toplam_islem_tutarı)) %>%
+  arrange(desc(isyeri_grubu_total))%>% filter(isyeri_grubu_total>20000)%>%
+  ggplot(data = ., aes(x="İşyeri Grupları", y=isyeri_grubu_total, fill = isyeri_grubu)) +
+  geom_bar(width = 1, stat = "identity", color = "white",position=position_dodge())
+``` 
+
+Highest seven sector according to their total card transaction amounts and how they changed in six months.
+
+```{r message=FALSE}
+highest_seven <- c("MARKET VE ALIŞVERİŞ MERKEZLERİ","GİYİM VE AKSESUAR","BENZİN VE YAKIT İSTASYONLARI","ÇEŞİTLİ GIDA","HİZMET SEKTÖRLERİ","ELEKTRİK-ELEKTRONİK EŞYA, BİLGİSAYAR","YEMEK")                                                    
+tablo_son %>% filter(isyeri_grubu %in% highest_seven) %>% 
+  mutate(toplam_islem_tutarı = kredi_kartı_islem_tutarı + banka_kartı_islem_tutarı) %>%  
+  ggplot(aes(x=ay, y=toplam_islem_tutarı, color=isyeri_grubu)) +
+  geom_line()
+``` 
+
+##### <u>_Total Transaction Numbers and Share_</u>
+
+For the first 6 months of 2019, sectors total amounts of transaction debit and credit card and also their shares as percentage.
+
+```{r message=FALSE}
+
+tablo_son %>% select(isyeri_grubu,kredi_kartı_islem_adedi,banka_kartı_islem_adedi) %>% 
+  mutate(toplam_islem_adedi = kredi_kartı_islem_adedi + banka_kartı_islem_adedi) %>%
+  group_by(isyeri_grubu) %>% summarise(isyeri_grubu_total = sum(toplam_islem_adedi)) %>%
+  arrange(desc(isyeri_grubu_total)) %>%
+  transmute(isyeri_grubu,isyeri_grubu_total,isyeri_grubu_total_fraction = round((isyeri_grubu_total / sum(isyeri_grubu_total))*100,1))
+
+``` 
+
+Number of total transactions Gas Stations vs Service Sector in six month
+
+```{r message=FALSE}
+tablo_son %>%
+  select(isyeri_grubu,kredi_kartı_islem_adedi,banka_kartı_islem_adedi,ay)%>%
+  mutate(total_kart_islem_adedi = kredi_kartı_islem_adedi + banka_kartı_islem_adedi)%>%
+  group_by(isyeri_grubu, ay) %>% 
+  filter(isyeri_grubu %in% c("BENZİN VE YAKIT İSTASYONLARI", "HİZMET SEKTÖRLERİ")) %>%
+  summarize(aylık_total_kart_islem_adedi = sum(total_kart_islem_adedi))%>%
+  ggplot(data=., aes(x=ay, y=round(aylık_total_kart_islem_adedi/1000000,0), fill=isyeri_grubu)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  labs(x="Aylar", y = "Total işlem adetleri (Milyon adet)", fill="İsyeri Grupları") +
+  theme_minimal()
+``` 
