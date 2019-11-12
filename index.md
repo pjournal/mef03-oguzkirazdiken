@@ -6,4 +6,4 @@
 
 ## Week 4 - BKM Assignmet 
 
-[BKM Assignment](https://github.com/pjournal/mef03-oguzkirazdiken/blob/master/BKM-Assignment.html)
+[BKM Assignment](https://pjournal.github.io/mef03-oguzkirazdiken/BKM-Assignment.html)
