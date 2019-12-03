@@ -10,4 +10,6 @@
 
 ## Week 6 - Tennis Data Analysis
 
-[Tennis Data Analysis](https://pjournal.github.io/mef03-oguzkirazdiken/BKM-Assignment.html)
+[Tennis Data Analysis](https://pjournal.github.io/mef03-oguzkirazdiken/Tennis_Data-Analysis.html)
+
+
