@@ -7,3 +7,7 @@
 ## Week 4 - BKM Assignmet 
 
 [BKM Assignment](https://pjournal.github.io/mef03-oguzkirazdiken/BKM-Assignment.html)
+
+## Week 6 - Tennis Data Analysis
+
+[Tennis Data Analysis](https://pjournal.github.io/mef03-oguzkirazdiken/BKM-Assignment.html)
