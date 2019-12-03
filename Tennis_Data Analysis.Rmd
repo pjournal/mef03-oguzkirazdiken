@@ -1,0 +1,104 @@
+---
+title: "Tennis Data Analysis"
+output: html_document
+---
+
+#### <u> About Data </u>
+
+In our dataset, there are five different DataFrame which related to 2017's tennis competitions, match details, player and tournament information. You can find these beautiful dataset from given [link.](https://github.com/serve-and-volley/atp-world-tour-tennis-data/)
+
+
+```{r message=FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+``` 
+
+```{r echo=FALSE}
+url<-url("https://github.com/pjournal/mef03-ozgurken/blob/master/atp_tennis_data_2017.RData?raw=true")
+tennis_data <- load(url)
+
+``` 
+
+#### __Initial Analysis__
+
+What is the country rankings in single championships?
+
+```{r results='hide', message=FALSE}
+
+single_winners <- tourney_df %>% 
+  inner_join(player_df,by = c("singles_winner_player_id" = "player_id")) %>%
+  group_by(flag_code) %>% summarise(country_wins = n()) %>% arrange(desc(country_wins))
+
+``` 
+```{r message=FALSE}
+head(single_winners)
+```
+
+Of course Spain guess why? We will dive into this later.
+
+The countries which couldn't succeed any single chaimpionships and they ranked according to their total number of won matches during the games.
+
+```{r results='hide', message=FALSE}
+
+won_countries <- tourney_df %>% 
+  inner_join(player_df,by = c("singles_winner_player_id" = "player_id"))
+couldnt <- player_df %>% anti_join(won_countries, by = "flag_code") %>%
+  inner_join(score_df,by=c("player_id"="winner_player_id")) %>%
+  group_by(flag_code) %>% summarise(country_wins = sum(winner_games_won)) %>% arrange(desc(country_wins))
+  
+``` 
+```{r message=FALSE}
+head(couldnt)
+```
+
+Nice try Australia :(
+
+#### __Handedness Analysis and Nadal__
+
+It can be predicted that most of winning players would be right handed.The ratio is 84%.
+
+```{r message=FALSE}
+tab <- score_df %>% 
+  inner_join(player_df,by = c("winner_player_id"="player_id"))
+tab$tourney_id <- as.numeric(tab$tourney_id)
+
+tab %>% group_by(handedness) %>%
+  summarise(total_wins = n()) %>% arrange(desc(total_wins))
+``` 
+
+But there is an unpredicted left handed player which gives us an idea about Spain's success in single championships. 
+
+```{r message=FALSE}
+tab %>% group_by(player_slug,flag_code,handedness) %>%
+  summarise(total_wins = n()) %>% arrange(desc(total_wins)) %>% head(5)
+``` 
+
+#### __Experience Analysis__
+
+Our player Data Frame includes information about start year of players professional life. But did it really affect their wins?
+
+```{r message=FALSE}
+experience_rate <- tab %>% group_by(turned_pro) %>% 
+  summarise(total_wins =n(),number_of_players = n_distinct(winner_player_id)) %>% 
+  arrange(turned_pro) %>% mutate(wins_per_player = total_wins / number_of_players)
+head(experience_rate,7)
+``` 
+
+According to players start year of players, total wins in 2017 and number of player in that range given in the table, so we can calculate that specific years wins per player.
+
+```{r message=FALSE}
+ggplot(experience_rate,aes(x=turned_pro,y=wins_per_player))+ 
+  geom_point(aes(col="tomato2",size = total_wins)) + theme(legend.position="none") 
+``` 
+
+Most of the wins accomplished from players which started their professional life around 2005.
+
+But there is someone who started his career in 1997 and in 2017, at his 20th year of professional life in tennis he won 25 match.
+
+```{r message=FALSE}
+tab %>% filter(turned_pro == 1997) %>% group_by(player_slug) %>% summarise(total_wins = n())
+``` 
+
+
+
